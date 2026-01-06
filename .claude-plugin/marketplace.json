@@ -1,0 +1,15 @@
+{
+  "name": "forest-admin-ai",
+  "description": "AI skills and tools for Forest Admin",
+  "owner": {
+    "name": "Forest Admin",
+    "url": "https://www.forestadmin.com"
+  },
+  "plugins": [
+    {
+      "name": "forest-mcp",
+      "source": "./forest-mcp",
+      "description": "MCP server skill for querying and manipulating Forest Admin data"
+    }
+  ]
+}

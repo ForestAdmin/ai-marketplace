@@ -1,8 +1,8 @@
 # Forest Admin AI Marketplace
 
-Collection of AI skills for Forest Admin integrations.
+AI skills and plugins for Forest Admin integrations.
 
-## Available Skills
+## Available Plugins
 
 ### forest-mcp
 
@@ -16,24 +16,29 @@ MCP server skill for querying and manipulating Forest Admin data. Provides tools
 
 ### Claude Code
 
-Copy the skill folder to one of these locations:
-
-**Personal (available in all projects):**
-```bash
-cp -r forest-mcp ~/.claude/skills/
+**Option 1: Via marketplace (recommended)**
+```
+/plugin marketplace add ForestAdmin/ai-marketplace
+/plugin install forest-mcp
 ```
 
-**Project-specific (shared via git):**
-```bash
-cp -r forest-mcp .claude/skills/
-```
+**Option 2: Manual copy**
 
-Restart Claude Code. The skill will be automatically detected.
+Copy the skill folder to your skills directory:
+
+```bash
+# Personal (all projects)
+cp -r forest-mcp/skills/forest-mcp ~/.claude/skills/
+
+# Project-specific (shared via git)
+cp -r forest-mcp/skills/forest-mcp .claude/skills/
+```
 
 ### Claude Desktop
 
 1. Create a ZIP of the skill folder:
    ```bash
+   cd forest-mcp/skills
    zip -r forest-mcp.zip forest-mcp/
    ```
 
@@ -42,6 +47,22 @@ Restart Claude Code. The skill will be automatically detected.
    - Enable **Code execution and file creation**
    - In the Skills section, click **Upload skill**
    - Select the `forest-mcp.zip` file
+
+## Repository Structure
+
+```
+ai-marketplace/
+├── .claude-plugin/
+│   └── marketplace.json          # Marketplace catalog
+└── forest-mcp/                   # Plugin
+    ├── .claude-plugin/
+    │   └── plugin.json           # Plugin manifest
+    └── skills/
+        └── forest-mcp/           # Skill
+            ├── SKILL.md
+            └── references/
+                └── filters-reference.md
+```
 
 ## License
 

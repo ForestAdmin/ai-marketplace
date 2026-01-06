@@ -1,0 +1,9 @@
+{
+  "name": "forest-mcp",
+  "version": "1.0.0",
+  "description": "MCP server skill for querying and manipulating Forest Admin data through CRUD operations",
+  "author": {
+    "name": "Forest Admin",
+    "url": "https://www.forestadmin.com"
+  }
+}
