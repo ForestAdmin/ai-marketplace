@@ -155,9 +155,17 @@ Filter on relation field (use `@@@` separator):
 
 See [filters reference](references/filters-reference.md) for complete operator list.
 
+## Understanding Operators
+
+When `describeCollection` returns `operators: null` for a field, it means the operators are **unknown** (older agent version), not that filtering is unsupported. In this case:
+- Try common operators (`Equal`, `Contains`, `In`, etc.)
+- The request will fail with a clear error if the operator is not supported
+
+When operators are returned, use only those listed for each field.
+
 ## Best Practices
 
-1. **Describe first**: Always call `describeCollection` to discover available fields and operators
+1. **Describe first**: Always call `describeCollection` to discover available fields
 2. **Use field projection**: Specify `fields` to reduce data transfer
 3. **Paginate large results**: Use `pagination` for large datasets
-4. **Check operators**: Use only operators returned by `describeCollection` for each field
+4. **Handle unknown operators**: When `operators: null`, try common operators - errors are informative
