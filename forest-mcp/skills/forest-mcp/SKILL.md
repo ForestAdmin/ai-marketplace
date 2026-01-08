@@ -26,8 +26,8 @@ MCP server providing CRUD operations on Forest Admin data.
 | `create` | Create a new record |
 | `update` | Update an existing record |
 | `delete` | Delete one or more records |
-| `getActionForm` | Get form fields for a smart action |
-| `executeAction` | Execute a smart action on records |
+| `getActionForm` | Get form fields for an action |
+| `executeAction` | Execute an action on records |
 
 ## Tool Usage
 
@@ -130,9 +130,9 @@ Same parameters as `list`, plus:
 }
 ```
 
-## Smart Actions
+## Actions
 
-Smart actions are custom operations defined on collections (e.g., "Send Email", "Refund Order", "Archive User").
+Actions are custom operations defined on collections (e.g., "Send Email", "Refund Order", "Archive User").
 
 ### Workflow
 
