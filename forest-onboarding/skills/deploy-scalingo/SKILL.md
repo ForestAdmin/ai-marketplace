@@ -26,7 +26,7 @@ Activates a **production environment** by pushing the agent code to **Scalingo**
 2. **`FOREST_SERVER_URL` must be publicly reachable** — same finding as the other PaaS: use a **public** Forest server (prod). An internal/dev server fails with `getaddrinfo ENOTFOUND`.
 3. **Managed Postgres** — `scalingo addons-add postgresql <plan>` (e.g. `postgresql-starter-512`). The addon **auto-sets `DATABASE_URL`** (and `SCALINGO_POSTGRESQL_URL`) on the app — **do not override `DATABASE_URL`**. The DB starts empty → seed it (see #6).
 4. **db-tunnel needs an SSH key registered with Scalingo.** The managed DB has a **private IP** (not publicly reachable); local access (seed + scaffold introspection) goes through `scalingo db-tunnel` → `127.0.0.1:10000`, which auths over **SSH**. An API-token login is NOT enough: `scalingo keys-add <name> ~/.ssh/id_ed25519.pub` + `ssh-add`, else the tunnel fails with *"no authentication method has succeeded"*.
-5. **Managed Postgres presents a self-signed certificate.** The agent's SQL datasource rejects it under strict TLS (`self-signed certificate in certificate chain`). Set **`NODE_TLS_REJECT_UNAUTHORIZED=0`** — both for the **local boot** (via tunnel) AND on the **deployed app** (`env-set`).
+5. **Managed Postgres presents a self-signed certificate** (`self-signed certificate in certificate chain`). ⚠️ The quick workaround `NODE_TLS_REJECT_UNAUTHORIZED=0` disables TLS verification **process-wide** — including the agent↔`api.forestadmin.com` connection — so it's acceptable only for a **throwaway spike, NOT production** (MITM risk). For prod, **scope SSL to the DB**: configure the SQL datasource with Scalingo's **CA certificate** (proper verification), or at minimum `rejectUnauthorized: false` only on the Postgres connection — never the global env var.
 6. **Deploy branch** — Scalingo deploys the remote **`main`** branch: `git push scalingo master:main` (local `master` → remote `main`). Node buildpack runs `npm start` (a `web: npm start` Procfile is optional).
 7. **App name** can't contain the word `scalingo` (422 on create).
 8. **Production schema** — with `NODE_ENV=production` the agent serves the **committed** `.forestadmin-schema.json` (not introspected) — generate (dev boot) + commit before deploying; regenerate + commit + redeploy after any customization.
@@ -53,10 +53,9 @@ scalingo --app "$APP" env-set \
   FOREST_AUTH_SECRET=<generated> \
   DATABASE_SCHEMA=public \
   DATABASE_SSL_MODE=required \
-  NODE_TLS_REJECT_UNAUTHORIZED=0      # managed PG self-signed cert (finding #5)
+  NODE_TLS_REJECT_UNAUTHORIZED=0      # ⚠️ spike-only — disables TLS process-wide; for prod scope SSL to the DB (CA cert), see finding #5
 
-# 4. Deploy (git push — Scalingo builds the Node app via buildpack)
-git init && git add -A && git commit -m "deploy agent"
+# 4. Deploy (git push — Scalingo builds via buildpack; repo already committed in step 1)
 git push scalingo master:main        # Scalingo deploys the remote `main` branch
 ```
 
@@ -88,7 +87,7 @@ git push scalingo master:main        # Scalingo deploys the remote `main` branch
 
 ## Redeploy after a change
 
-`NODE_ENV=production` serves the committed schema. After ANY change: regenerate `.forestadmin-schema.json` (dev boot / `forest schema:update`) → commit → `git push scalingo master`.
+`NODE_ENV=production` serves the committed schema. After ANY change: regenerate `.forestadmin-schema.json` (dev boot / `forest schema:update`) → commit → `git push scalingo master:main` (the `:main` refspec is required — Scalingo only deploys the remote `main` branch).
 
 ## Fail-fast
 
