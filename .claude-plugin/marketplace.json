@@ -25,6 +25,11 @@
       "name": "forest-onboarding",
       "source": "./forest-onboarding",
       "description": "Onboard onto Forest Admin headlessly (Standalone-first): real-DB or zero-DB demo project, dev agent, layout, production deploy, and team invitations"
+    },
+    {
+      "name": "forest",
+      "source": "./forest",
+      "description": "Vibe-code Forest Admin headlessly from Claude — one skill per domain (/forest:onboard today; layout, workflows, management next). Supersedes forest-onboarding."
     }
   ]
 }
