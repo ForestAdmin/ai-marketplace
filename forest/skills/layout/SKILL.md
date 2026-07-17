@@ -118,6 +118,27 @@ component references it in `options.filter` via `{{<MasterComponentName>.selecte
 } } ] }
 ```
 
+### A good workspace is more than lists
+
+Four collection lists side by side is **not** a workspace. Compose a real screen:
+
+- a **master** `collection` list (`onRowClick:"selectARecord"`), then **detail** panels that follow its selection;
+- prefer **`field`** components for the detail (the selected record's fields — relations allowed, e.g. `customer.email`) over a second full list;
+- **`action`** / **`workflow`** buttons wired to the selection;
+- **KPIs** (`chart`, type `Value`) for context;
+- structure with **`text`** headers, **`divider`**, **`section`**, **`tabs`** — guide the eye.
+
+**Palette (10 types):** `collection` · `field` · `chart` · `action` · `workflow` · `inbox`(premium) · `text` · `divider` · `section` · `tabs`.
+
+**Three ways to wire a dependency to the master:**
+1. filtered detail **list** → `options.filter` with `{{<MasterName>.selectedRecord.<field>}}` (references the master by **name**);
+2. detail **field/panel** → `field` with `sourceWorkspaceComponentId:"<master component id>"` + `templatedFieldPath`;
+3. **action/workflow** on the selection → `componentToSelectRecordFromId:"<master component id>"`.
+
+→ **Full palette shapes + a complete worked "AML review" workspace:** **[references/workspace-examples.md](references/workspace-examples.md)**.
+
+> **Tip:** `actionId`, `workflowId`, widget and filter shapes are fiddly — build one in the app, then `layout pull -e <env> -t <team>` and copy the exact mould from `layout.workspaces[].components`.
+
 ### Charts / dashboards, segments, inboxes, remove
 See the full catalogue — paths, value schemas per chart type, premium packs, business rules.
 
