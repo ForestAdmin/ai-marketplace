@@ -36,7 +36,7 @@ function table(entries) {
     if (e.restrict) byPath[e.path].restrict = e.restrict;
     if (e.polymorphic) byPath[e.path].poly = e.polymorphic;
   }
-  let t = '| chemin | ops | premium | note |\n|---|---|---|---|\n';
+  let t = '| path | ops | premium | note |\n|---|---|---|---|\n';
   for (const [p, i] of Object.entries(byPath)) {
     const flags = [i.restrict && `⚠ ${i.restrict}`, i.poly && `poly:${i.poly}`].filter(Boolean).join(' ');
     t += `| \`${p}\` | ${[...i.ops].join(' / ')} | ${i.premium || ''} | ${flags} |\n`;
@@ -50,72 +50,72 @@ const workflows = parseFile('/tmp/workflows.ts');
 const tl = table(layout), tf = table(folders), tw = table(workflows);
 const total = layout.length + folders.length + workflows.length;
 
-const doc = `# Catalogue des patchs layout — référence générée depuis la source serveur
+const doc = `# Layout patch catalogue — reference generated from the server source
 
-> **Généré** (pas recopié) depuis \`ForestAdmin/forestadmin-server\` :
+> **Generated** (not hand-copied) from \`ForestAdmin/forestadmin-server\`:
 > \`packages/private-api/src/domain/layout/patterns/{make-layout-patch-patterns,make-patch-folder-patterns,workflow/patterns/make-patch-workflow-patterns}.ts\`
-> + les validateurs Joi (\`validators/models/*\`). **${total} patterns** au total
+> + the Joi validators (\`validators/models/*\`). **${total} patterns** total
 > (${layout.length} layout + ${folders.length} folders + ${workflows.length} workflows).
-> Régénérable via \`generate-reference.js\` — en cas de 422 inattendu, regénérer contre le HEAD serveur.
+> *(Maintainers: regenerate against the server HEAD via \`tooling/generate-reference.js\` — authoring tooling, outside the skill.)*
 
-Endpoints : \`PATCH /api/layout\`, \`PATCH /api/folders\`, \`PATCH /api/workflows\`.
-Corps = tableau RFC 6902 \`[{op,path,value?}]\`. Via la CLI toolbelt, l'entrée est un
-objet keyé par domaine : \`{ "layout": [...], "folders": [...] }\`.
+Endpoints: \`PATCH /api/layout\`, \`PATCH /api/folders\`, \`PATCH /api/workflows\`.
+Body = an RFC 6902 array \`[{op,path,value?}]\`. Through the toolbelt CLI, the input is an
+object keyed by domain: \`{ "layout": [...], "folders": [...] }\`.
 
-## Conventions de chemin
+## Path conventions
 
-- \`:collectionId\` = **nom** de collection (ou nom de workspace — quirk serveur : le param
-  s'appelle \`collectionId\` mais reçoit l'id de workspace). \`:primaryId\` / \`:workflowId\` /
-  \`:folderId\` = **uuid** (ou int) que tu génères toi-même pour les \`add\`.
-- \`:fieldId\` / \`:fieldName\` : un champ s'adresse par id OU par nom (deux familles de chemins).
-- \`add\` → chemin finissant par \`/-\`, valeur = objet **complet** (avec \`id\` uuid).
-- Réordonner = \`replace …/position\`. Renommer = \`replace …/name\`|\`displayName\`.
+- \`:collectionId\` = collection **name** (or workspace name — server quirk: the param is
+  called \`collectionId\` but receives the workspace id). \`:primaryId\` / \`:workflowId\` /
+  \`:folderId\` = a **uuid** (or int) you generate yourself for \`add\`s.
+- \`:fieldId\` / \`:fieldName\`: a field is addressed by id OR by name (two path families).
+- \`add\` → path ending in \`/-\`, value = the **complete** object (with an \`id\` uuid).
+- Reorder = \`replace …/position\`. Rename = \`replace …/name\`|\`displayName\`.
 
-## Règles serveur (depuis le code, pas devinées)
+## Server rules (from the code, not guessed)
 
-- **Atomique par domaine** : une op invalide → tout le lot rejeté (\`204\` si succès).
-- **Op \`test\` obligatoire** pour changer un discriminant polymorphe : la whitelist déclare
-  \`options/collectionId\` et \`options/relatedDataFieldName\` d'un composant en \`op:'test'\`
-  (\`polymorphic:'collection'\`), idem \`charts/:id/type\` et \`/sourceCollectionId\`. Affirme la
-  valeur courante dans le **même lot** avant le \`replace\`.
-- **Modifier les options d'un composant = chemins fins** (\`options/filter\`, \`options/onRowClick\`…).
-  Le \`replace …/options\` en bloc est refusé en pratique → chemins fins, ou \`remove\`+\`add\`.
-- **Colonnes de liste** : \`replace\` seulement (position/isVisible) — pas d'add/remove (schéma agent).
-- **Règles métier** (refus dédié) : nom de composant workspace unique, nom de viewlist unique,
-  nom/segmentId d'inbox uniques, pas de suppression du dossier principal, pas d'item dupliqué
-  dans deux dossiers, pas de dossier fantôme.
+- **Atomic per domain**: one invalid op → the whole batch is rejected (\`204\` on success).
+- **\`test\` op required** to change a polymorphic discriminant: the whitelist declares a
+  component's \`options/collectionId\` and \`options/relatedDataFieldName\` as \`op:'test'\`
+  (\`polymorphic:'collection'\`), same for \`charts/:id/type\` and \`/sourceCollectionId\`. Assert the
+  current value in the **same batch** before the \`replace\`.
+- **Editing a component's options = fine paths** (\`options/filter\`, \`options/onRowClick\`…).
+  A whole-\`options\` \`replace\` is refused in practice → fine paths, or \`remove\`+\`add\`.
+- **List columns**: \`replace\` only (position/isVisible) — no add/remove (agent schema).
+- **Business rules** (dedicated refusal): unique workspace-component name, unique viewlist name,
+  unique inbox name/segmentId, no deleting the main folder, no item duplicated across two
+  folders, no ghost folder.
 
-## Erreurs
+## Errors
 
-- \`422 Not-supported patch: {op,path}\` → hors whitelist (corriger le chemin).
-- \`422 Invalid patch value (...) ValidationError: ...\` → Joi, **une erreur à la fois** → itérer.
-- \`403\` → pack premium manquant (\`scopes\` | \`multipleDashboards\` | \`inbox\`) ou rôle insuffisant.
+- \`422 Not-supported patch: {op,path}\` → outside the whitelist (fix the path).
+- \`422 Invalid patch value (...) ValidationError: ...\` → Joi, **one error at a time** → iterate.
+- \`403\` → missing premium pack (\`scopes\` | \`multipleDashboards\` | \`inbox\`) or insufficient role.
 
 ---
 
-## Schémas de valeurs (extraits des validateurs Joi)
+## Value schemas (extracted from the Joi validators)
 
 ### Workspace (\`add /workspaces/-\`)
 \`{ id:uuid, name, icon:string|null, position:number(≥0), collectionId:string|null, components:[] }\`
 
-### Composant (\`add /workspaces/<ws>/components/-\`)
+### Component (\`add /workspaces/<ws>/components/-\`)
 \`{ id:uuid, name, type, displaySettings:{x,y,width,height}, visibility:{type}, options:{…} }\`
-- \`name\` : \`[a-zA-Z0-9-_]\` (pas d'espaces), **unique** dans le workspace, ≠ \`currentUser\`.
+- \`name\`: \`[a-zA-Z0-9-_]\` (no spaces), **unique** in the workspace, ≠ \`currentUser\`.
 - \`visibility.type\` ∈ \`always\` | \`whenItsContextIsSet\` | \`whenAnotherComponentIsVisible\` (+\`componentId\`).
-- \`type\` (18) : text, divider, chart, collection, field, link, dropdown, date-picker, search,
+- \`type\` (18): text, divider, chart, collection, field, link, dropdown, date-picker, search,
   action, metabase, tabs, section, toggle, input, inbox*, smart, workflow. (*premium \`inbox\`)
-- options \`collection\` : \`{ collectionId, segmentId:null, onRowClick:"selectARecord"|"redirectToRecord",
+- \`collection\` options: \`{ collectionId, segmentId:null, onRowClick:"selectARecord"|"redirectToRecord",
   filter, viewId, sortingFieldName, sortingOrder, recordsPerPage, showSearchbar, showFilters,
   showCreate, showActions, showWorkflows, enableSegments, visibleColumns:[{name,position}],
   relatedDataFieldName, sourceWorkspaceComponentId }\`.
-- **Dépendance master→detail** = \`options.filter.conditions[].value = "{{<NomComposantMaster>.selectedRecord.<champ>}}"\`
-  (master doit avoir \`onRowClick:"selectARecord"\`). Même collection → \`fieldName:"id"\` ;
-  via relation → \`fieldName:"<relation>", subFieldName:"id"\`.
+- **master→detail dependency** = \`options.filter.conditions[].value = "{{<MasterComponentName>.selectedRecord.<field>}}"\`
+  (the master must have \`onRowClick:"selectARecord"\`). Same collection → \`fieldName:"id"\`;
+  via a relation → \`fieldName:"<relation>", subFieldName:"id"\`.
 
 ### Charts (\`add …/charts/-\`) — \`{ id:uuid, name, description, type, displaySettings:{x,y,width,height}, …}\`
-\`aggregator\` ∈ \`Sum\`|\`Count\` ; si \`Count\`, \`aggregateFieldName\` peut être \`null\`.
-\`timeRange\` ∈ \`Day\`|\`Week\`|\`Month\`|\`Quarter\`|\`Year\` **ou une variable \`{{…}}\`**.
-| type | champs requis (au-delà du commun) |
+\`aggregator\` ∈ \`Sum\`|\`Count\`; if \`Count\`, \`aggregateFieldName\` may be \`null\`.
+\`timeRange\` ∈ \`Day\`|\`Week\`|\`Month\`|\`Quarter\`|\`Year\` **or a \`{{…}}\` variable**.
+| type | required fields (beyond the common ones) |
 |---|---|
 | \`Value\` | \`sourceCollectionId\`, \`aggregator\`, \`aggregateFieldName\`, \`filter\`(null ok) |
 | \`Line\` | + \`groupByFieldName\`, \`timeRange\` |
@@ -123,28 +123,28 @@ objet keyé par domaine : \`{ "layout": [...], "folders": [...] }\`.
 | \`Leaderboard\` | \`labelFieldName\`, \`relationshipFieldName\`, \`aggregateFieldName\`, \`aggregator\`, \`limit\`(≥1) |
 | \`Objective\` | + \`objective\`(number) |
 | \`Percentage\` | \`numeratorChartId\`, \`denominatorChartId\` |
-| \`Smart\`/query | \`query\`(SQL) / code smart |
+| \`Smart\`/query | \`query\`(SQL) / smart code |
 
 ### Segment (\`add …/segments/-\`) — *premium \`scopes\`*
 \`{ id:uuid, name, icon:string|null, type:"manual"|"smart", position, defaultSortingFieldName:string|null,
 defaultSortingFieldOrder:"ascending"|"descending"|null, isVisible, hasColumnsConfiguration, columns:[…],
 filter, query, connectionName:string|null }\`
-- \`type:"manual"\` → \`filter\` **requis**, \`query\` interdit. \`type:"smart"\` → \`query\` **requis**, \`filter\` interdit.
+- \`type:"manual"\` → \`filter\` **required**, \`query\` forbidden. \`type:"smart"\` → \`query\` **required**, \`filter\` forbidden.
 
 ### Folder children (\`add /folders/<id>/children/-\`)
-\`{ id:"<collectionId>", type:"collection", position, isVisible }\` (le dossier \`isMain\` est insupprimable).
+\`{ id:"<collectionId>", type:"collection", position, isVisible }\` (the \`isMain\` folder cannot be deleted).
 
 ---
 
-## Catalogue complet des chemins
+## Full path catalogue
 
-### domaine \`layout\` (${layout.length} patterns, ${tl.paths} chemins)
+### domain \`layout\` (${layout.length} patterns, ${tl.paths} paths)
 
 ${tl.md}
-### domaine \`folders\` (${folders.length} patterns, ${tf.paths} chemins)
+### domain \`folders\` (${folders.length} patterns, ${tf.paths} paths)
 
 ${tf.md}
-### domaine \`workflows\` (${workflows.length} patterns, ${tw.paths} chemins) — *coquille seule ; le BPMN passe par un upload S3 séparé*
+### domain \`workflows\` (${workflows.length} patterns, ${tw.paths} paths) — *shell only; the BPMN goes through a separate S3 upload*
 
 ${tw.md}`;
 

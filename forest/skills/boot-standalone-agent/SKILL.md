@@ -29,10 +29,11 @@ Before running anything mutating, show the **detected stack** (framework, ORM/da
 
 ```bash
 cd <generated-project-dir>
+LOG=/tmp/forest-agent-$(basename "$PWD").log  # per-project log path — avoids collision if two agents boot
 npm install                                   # then verify it populated deps (see landmines below)
 npm run build                                 # TypeScript scaffold ONLY — `start` runs the COMPILED dist/;
                                               # skip for a JS scaffold (it has no build script)
-npm start > /tmp/forest-agent.log 2>&1 &      # background; capture the log
+npm start > "$LOG" 2>&1 &                      # background; capture the log
 AGENT_PID=$!                                   # keep the pid to stop it later
 ```
 
@@ -42,15 +43,17 @@ Then **poll the log** until the readiness line appears (or the process dies):
 
 ```bash
 # re-run a few times; stop when you see "Successfully mounted" or the process has exited
-grep -E "Successfully mounted on Standalone server|Error" /tmp/forest-agent.log
-kill -0 "$AGENT_PID" 2>/dev/null || echo "agent exited — read /tmp/forest-agent.log for the error"
+grep -E "Successfully mounted on Standalone server|Error" "$LOG"
+kill -0 "$AGENT_PID" 2>/dev/null || echo "agent exited — read $LOG for the error"
 ```
 
 > Run any `forest` command (e.g. the readiness check below) via `bash -c '… </dev/null 2>&1'` — a broken zsh `command_not_found_handler` (mise) can swallow its output, and `</dev/null` avoids hanging on prompts. See the orchestrator's *Running the CLI* note.
 
 > ⚠️ **Demo landmine** — `create:demo`'s bundled install can print "Hooray installation success!" yet leave `node_modules/@forestadmin` **empty**, so `npm start` fails to resolve `@forestadmin/*`. Before booting, **verify** `node_modules/@forestadmin` is populated; if not, **re-run `npm install`** and re-check.
 
-> ⚠️ **TypeScript build landmine (`@types/node` skew)** — the scaffold pins TypeScript `^4.9` but does **not** pin `@types/node`, so `npm install` pulls the latest (v26+), whose `.d.ts` uses syntax TS 4.9 can't parse — `npm run build` then fails with parse errors in `node_modules/@types/node/*.d.ts` (and `skipLibCheck` does **not** skip *parse* errors). Fix in one shot instead of diagnosing: **`npm install --save-dev @types/node@^20`** (matches the Node 22 runtime closely enough), then rebuild. This also breaks the later Heroku build, so pin it here once. *(Root cause is the scaffold; pin proactively right after `npm install`.)*
+> ⚠️ **TypeScript build landmine (stale `tsc` can't parse modern `.d.ts`/`.d.cts`)** — the scaffold pins TypeScript `^4.9`, but transitive deps ship declaration files in newer TS syntax: `@types/node` (v26+, pulled unpinned) **and `zod` v4** (`node_modules/zod/v4/core/schemas.d.cts`). `tsc@4.9` fails to **parse** them and `skipLibCheck` does **not** skip *parse* errors → `npm run build` dies with `TS1005`/`TS1128` in `node_modules/*`. **Verified fix (one shot): bump TypeScript — `npm install --save-dev typescript@^5.5`**, then rebuild. This parses both offenders and **supersedes** the narrower `@types/node@^20` down-pin. Do it right after `npm install` (it also unblocks the later Heroku build). *(Root cause is the scaffold's TS pin.)*
+
+> ⚠️ **Two-port landmine** — the demo agent binds **two** listeners (the agent on `APPLICATION_PORT`, plus a secondary agent-client/AI-proxy port). If another agent is already running, the boot fails with `EADDRINUSE` — sometimes on the **secondary** port, *after* it has already logged `Successfully mounted` and pushed the schema. To boot cleanly alongside another agent, override the port: **`APPLICATION_PORT=<free port> npm start`**. And note: the schema push can complete even when the second bind crashes, so the **dev env may already be active despite the crash** — check the log/`environments:get` before assuming failure.
 
 ## Readiness signal
 

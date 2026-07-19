@@ -19,17 +19,28 @@ Administration of an existing project, in two areas:
 
 Not here: first-time bootstrap (project/DB/agent/first-deploy) → **`onboard`**; UI/workspaces → **`layout`**; agent code → **`forest-code`**.
 
+> **Verification status — live-tested 2026-07-19** on a demo deployed to Heroku prod: ✅ verified end-to-end —
+> `roles:create` (needs a prod env), `roles:export`/`apply` round-trip, `roles:copy` (both envs must be remote),
+> `users:invite` (real email sent), `teams:create`/`copy-layout`/`delete`, `branch` (needs `--projectId` **and**
+> `-o <origin>`), and the deploy that creates the first "Operations" role. Names/flags match `forest <cmd> --help` (CLI 5.19.0).
+
 ## Command contract (every call)
 
 Resolve ids from `forest environments --format json` (never guess) → build with all flags up front →
 wrap `bash -c '… </dev/null 2>&1'` → never hand-answer a prompt (a prompt = a missing flag) → ignore the
 `Could not find typescript` warning. Names (role/team/env) are passed **verbatim**.
+**CLI-only surface — never the private HTTP API.** Drive only supported `forest` commands. Several admin
+actions have **no CLI command** — deleting a project (`projects` = `create`/`get` only), deleting a role
+(`roles` has no `delete`), removing a user (`users` has no `delete`). For those, **direct the user to the
+UI**; do **not** improvise a `curl` against the private API.
 
 ## Two ordering gotchas (they cause the classic failures)
 
-1. **The first role is created by the production deploy.** So `users:invite`/`users:edit -r <role>`
-   **before** any deploy fails with *"No role found"*. Fix: deploy first, **or** create a role up front
-   with `forest roles:create -n <name> -p <id>`.
+1. **Roles require a production environment — no pre-deploy shortcut.** The first role is created by the
+   production deploy, and even `forest roles:create` refuses without a prod env (*verified live: on a dev-only
+   demo → "A production environment is required to create a role"*). So `users:invite` / `users:edit -r <role>`
+   before any deploy fails (*"No role found"*), and you **cannot** work around it with `roles:create` — you
+   must have a production env first. `roles:export`/`apply` run, but there's nothing to export until then.
 2. **Branches need a remote (production) environment.** `forest branch` refuses on a dev-only project
    (*"…until this project has either a remote or a production environment"*). A `create:demo` dev-only
    project can't branch — and doesn't need to (it accepts direct layout writes).
@@ -40,10 +51,10 @@ wrap `bash -c '… </dev/null 2>&1'` → never hand-answer a prompt (a prompt = 
 
 ### Roles
 ```bash
-forest roles:create -n <name> -p <id>                       # create an empty role
-forest roles:export -e <env> -p <id>                        # export roles → wide-format CSV
+forest roles:create -n <name> -p <id>                       # create an empty role (⚠ needs a production env — fails on a dev-only project)
+forest roles:export -e <env> -p <id> -o roles.csv           # export roles → wide-format CSV (-o; default is stdout)
 forest roles:apply <file.csv> -e <env> -p <id> [-F]         # apply a wide-format CSV of roles/permissions
-forest roles:copy -f <src env> -t <dst env> -p <id>         # copy all roles between environments
+forest roles:copy -f <src env> -t <dst env> -p <id>         # copy roles — ⚠ BOTH envs must be remote/prod (copying to Development is refused)
 ```
 - **Roles-as-code round-trip**: `roles:export` → edit the **wide-format CSV** (one row per role, columns
   = collections/actions/scopes) → `roles:apply`. This is the versionable, reviewable way to manage RBAC.
@@ -73,7 +84,7 @@ forest teams:copy-layout -f <team> -t <team> -p <id> [--force]   # ⚠ overwrite
 
 ### Branches (isolate layout/schema changes)
 ```bash
-forest branch <name> -p <id> [-o <origin env>]     # create a branch off an environment
+forest branch <name> --projectId <id> -o <origin env>     # create a branch (⚠ --projectId, NO -p alias; and -o is REQUIRED headless — omit it and it prompts for the origin env)
 forest branch --format json                        # list branches
 forest branch <name> -d [--force]                  # delete
 forest switch <name>                               # set the current local branch
