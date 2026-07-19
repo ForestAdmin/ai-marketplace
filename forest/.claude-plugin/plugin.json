@@ -1,7 +1,7 @@
 {
   "name": "forest",
-  "version": "0.1.0",
-  "description": "Vibe-code Forest Admin headlessly from Claude — one plugin, one skill per Forest domain. Onboarding today (log in, create a real-DB or zero-DB demo project, boot the dev agent, deploy to production, invite the team) via /forest:onboard; layout, workflows and management skills join the same plugin. Orchestrates the toolbelt CLI end-to-end, no UI.",
+  "version": "0.2.0",
+  "description": "Build a Forest Admin back-office headlessly from Claude, no UI — start with /forest:start. Onboarding (log in, connect a real-DB or zero-DB demo project, boot the dev agent), layout & workspaces, workflows, and project management (roles, users, teams, environments, deploy). Most capabilities are ask-driven skills, not slash commands. Orchestrates the toolbelt CLI end-to-end. See README.md.",
   "author": {
     "name": "Forest Admin",
     "url": "https://www.forestadmin.com"

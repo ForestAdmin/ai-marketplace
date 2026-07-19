@@ -3,7 +3,9 @@ description: Start the Forest Admin headless onboarding (dev or ops flow)
 argument-hint: [dev | ops | <use-case description>]
 ---
 
-Launch the **onboard** skill (`/forest:onboard`) and drive the headless Forest Admin onboarding end-to-end.
+Run the **onboard** skill (the engine) and drive the headless Forest Admin onboarding end-to-end. `/forest:start`
+is the **single entry point** users type; the same onboarding also fires on natural language ("set up Forest
+Admin"). Don't point users to a separate `/forest:onboard` — this command *is* the way in.
 
 Treat `$ARGUMENTS` as the initial intent:
 - `dev` → the user has a database and wants to build a back-office on it (real-DB flow).

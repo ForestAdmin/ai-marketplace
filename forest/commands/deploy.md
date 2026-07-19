@@ -25,25 +25,13 @@ The local `.env` ties the scaffold to its dev env via `FOREST_ENV_SECRET`, but *
    - Confirm the **development** env (`type: development`) exists and is active (sanity check that Segment 1 really happened).
    - **Check for an existing production env** (`type: production`). If one exists, **reuse it** — do NOT create a duplicate. If none, create it in the next step.
 
-## 3. Production environment
+## 3. Hand off to onboard's go-to-prod (Segment 2 C)
 
-- If no production env exists: `forest environments:create --type production -n Production -p <projectId>` (URL omitted → created **inactive**, **no role yet**).
-- 🚧 **GATE 2**: the production deployment creates the project's **first role ("Operations")** — so inviting only works *after* this deploy succeeds.
+Project and dev env resolved, run the **onboard** skill's **Segment 2 C** — it is the **single source of truth** for the go-to-prod sequence and owns every gate, checkpoint and secret-by-reference rule. Do **not** re-derive the steps here; the sketch below is just the map:
 
-## 4. Collect the production database (🟦 checkpoint)
+1. **Production env** — reuse the existing `type: production` env if there is one; else `forest environments:create --type production -n Production -p <projectId>`.
+2. **Production DB** (🟦) — via a `.env` the user writes/sources, never pasted; must be remotely reachable (a local dev DB won't work from Heroku). Warn if it's the same DB as dev.
+3. **Deploy** → the **`deploy-heroku`** skill (PORT patch, IPv4 pooler, billed team, committed schema, prod `FOREST_ENV_SECRET` piped by reference), then set `apiEndpoint` → `isActive: true`. 🚧 **GATE 2**: this deploy creates the project's **first role** — inviting only works after it succeeds.
+4. **Surface + invite** — give the back-office link `https://app.forestadmin.com/<project-name>` (⚠️ never the Heroku URL); replay `forest layout:apply forest-layout.json …` on prod if the user curated one; then **offer** (don't force) `forest users:invite` — 🟦 real emails.
 
-The prod DB **may differ from dev** and **must be remotely reachable** — a local dev DB (`localhost`/Docker) will NOT work from Heroku. Collect the prod `DATABASE_URL` via a **`.env` the user writes / sources**, never pasted in chat. Ask: same-as-dev (only valid if dev is already a remote DB) vs a dedicated prod DB. 🟦 If same DB, warn that admin actions hit real production data.
-
-## 5. Deploy → activate
-
-Hand off to the **`deploy-heroku`** skill: it applies the validated findings (PORT patch, IPv4 pooler if needed, billed team, committed schema), pushes the agent with the **production** `FOREST_ENV_SECRET` (piped by reference), then sets `apiEndpoint` (`forest environments:update -e <prod env id> -u <url>`) → `isActive: true`. The schema push creates `apimapVersionId` **and the first role**.
-
-## 6. Surface + offer invite
-
-- Give the **back-office** link: `https://app.forestadmin.com/<project-name>` — ⚠️ never the Heroku URL (that's the agent backend).
-- *(If the user curated a `forest-layout.json` as code)* replay it on prod: `forest layout:apply forest-layout.json -e <prod env id> -t Operations -f`.
-- **Then** offer to invite the team (now unlocked by GATE 2): `forest users:invite -e <email> -l <level> [-r <role>] [-t <team>]` — 🟦 sends real emails. Offer it; don't force it.
-
-## Fail-fast
-
-🟥 Build failure, prod never reaching `isActive`, or an unreachable prod DB → stop with the logs (see `deploy-heroku` troubleshooting); do not loop silently.
+🟥 Fail-fast on a build failure, prod never reaching `isActive`, or an unreachable prod DB — stop with the logs (see `deploy-heroku` troubleshooting); never loop silently.

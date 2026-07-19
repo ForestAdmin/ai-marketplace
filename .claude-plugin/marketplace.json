@@ -7,29 +7,24 @@
   },
   "plugins": [
     {
-      "name": "forest-mcp",
-      "source": "./forest-mcp",
-      "description": "MCP server skill for querying and manipulating Forest Admin data"
+      "name": "forest",
+      "source": "./forest",
+      "description": "★ Main plugin — build a Forest Admin back-office headlessly from Claude, no UI. Start with /forest:start. Covers onboarding, layout & workspaces, workflows, and project management (roles/users/teams/environments/deploy). Orchestrates the toolbelt CLI end-to-end."
     },
     {
       "name": "forest-code",
       "source": "./forest-code",
-      "description": "Write and maintain Forest Admin agent code (modern + legacy)"
+      "description": "Write and maintain Forest Admin agent code (modern + legacy): actions, fields, hooks, segments, charts, relationships. Pairs with `forest`."
+    },
+    {
+      "name": "forest-mcp",
+      "source": "./forest-mcp",
+      "description": "MCP server skill for querying and manipulating Forest Admin data (list/search/create/update/delete records, explore schemas)."
     },
     {
       "name": "forest-docs",
       "source": "./forest-docs",
-      "description": "Ask anything about Forest Admin — connects to the docs MCP server"
-    },
-    {
-      "name": "forest-onboarding",
-      "source": "./forest-onboarding",
-      "description": "Onboard onto Forest Admin headlessly (Standalone-first): real-DB or zero-DB demo project, dev agent, layout, production deploy, and team invitations"
-    },
-    {
-      "name": "forest",
-      "source": "./forest",
-      "description": "Vibe-code Forest Admin headlessly from Claude — one skill per domain (/forest:onboard today; layout, workflows, management next). Supersedes forest-onboarding."
+      "description": "Ask anything about Forest Admin — connects to the docs MCP server."
     }
   ]
 }

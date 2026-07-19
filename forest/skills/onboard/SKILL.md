@@ -57,6 +57,7 @@ The goal is **zero self-inflicted misfires** (a prompt you triggered, a guessed 
 3. **BUILD with every flag up front** — from the command card below, so the CLI never needs to prompt.
 4. **EXECUTE wrapped** — `bash -c '… </dev/null 2>&1'`. Two proven reasons: (1) a broken zsh `command_not_found_handler` (e.g. `mise`) can **swallow `forest`'s stdout** — `bash` bypasses it; (2) `</dev/null` stops the CLI **hanging on an interactive prompt** (it fails fast instead). Don't rely on `timeout` — often absent on macOS.
 5. **NEVER hand-answer a prompt.** A prompt means a flag is missing — add it and re-run. It is a bug in the card, never something to type through.
+6. **CLI-only surface — never the private HTTP API.** This skill drives supported `forest`/`heroku` commands and nothing else. When there's **no CLI command** for what's asked (e.g. deleting a project — `projects` only has `create`/`get`), **point the user to the UI**; do **not** improvise a `curl` against the private API.
 
 **Prompt-triggers → the flag that silences them** (the cards already include these):
 
@@ -154,11 +155,16 @@ Two segments with a hard boundary. **Segment 1 runs to completion by default. Se
      🎉 Your back-office is live and reading your real data → https://app.forestadmin.com/<project>
         (it's running on your machine, just for you)
 
-        From here you can:
-          · tidy up how it looks — in the app, or I can do a quick cleanup pass as code
-          · deploy it so your team can use it → this is what unlocks inviting teammates
+        From here, just tell me what you'd like — for example:
+          · "build a screen"        → I'll compose a workspace (a list + detail panels, charts, action buttons)
+          · "automate something"    → I'll wire a workflow (an approval or escalation flow on a collection)
+          · "tidy up how it looks"  → rename/hide fields, organise the sidebar, a quick cleanup pass
+          · "put it in production"   → deploy it so your team can use it (this unlocks inviting teammates)
         …or you're good for now — your call.
      ```
+     *(These are ask-driven — the user just describes what they want and you route to the right skill:
+     "build a screen"/"tidy up" → `layout`, "automate" → `workflows`, "deploy"/"invite" → deploy path.
+     Surfacing them here is how the user discovers capabilities that have no slash command.)*
 
 ### Segment 2 — Opt-in extensions (only after the user chooses at the milestone)
 
@@ -173,7 +179,7 @@ Two segments with a hard boundary. **Segment 1 runs to completion by default. Se
   1. **Production environment** — `forest environments:create --type production -n Production` (URL may be omitted; created **inactive**, **no role yet**).
   2. **Collect the production database here** (not earlier): it **may differ from dev** and **must be remotely reachable** (a local dev DB will NOT work from a PaaS). Ask same-as-dev (only valid if dev is already remote) vs a dedicated prod DB; capture that prod `DATABASE_URL` **separately**. 🟦 If same DB, warn that admin actions hit real production data.
   3. **Deploy** → use the **`deploy-heroku`** skill: push the agent code with the **production** `FOREST_ENV_SECRET`. The agent pushes its schema to prod → `apimapVersionId` **+ the first role ("Operations") is created here**. Set `apiEndpoint` (`forest environments:update -e <id> -u <url>`) → `isActive: true`.
-     - 🚧 **GATE 2**: the **first role is created by this deployment** — so **inviting before deploying fails** ("No role found"). Deploy first, or create a role up front with `forest roles:create -n <name>`.
+     - 🚧 **GATE 2**: the **first role is created by this deployment** — so **inviting before deploying fails** ("No role found"). There is **no pre-deploy shortcut**: `forest roles:create` also refuses without a production env (verified live). Deploy first, then invite.
   4. **Re-apply the layout to prod** *(if the user did the code layout in A)* — replay the same versioned file: `forest layout:apply forest-layout.json -e <prod env id> -t Operations -f`. Since the artefact already exists, prod layout is nearly free.
   5. **Surface the prod back-office link** `https://app.forestadmin.com/<project-name>` before inviting.
   6. **Invite the team** — `forest users:invite -e <email> -l <level> [-r <role>] [-t <team>]` (`-e` repeats for several users; resolves role/team **by name**). 🟦 sends real emails. **This step lives here, downstream of deploy — never offer it as a standalone milestone option.**
@@ -201,7 +207,7 @@ The **back-office** is always `https://app.forestadmin.com/<project-name>` — t
 ## Notes
 
 - **Readiness**: local = the agent log line `Successfully mounted on Standalone server`; remote = poll `forest environments:get … --format json` (`isActive = apimapVersionId && apiEndpoint`).
-- **CLI surface (audited)**: `login`, `user`, `projects:create:demo|sql|nosql`, `environments`(+`:create|update|get|delete|reset`), `users:invite`, `roles:create`, `layout:pull|apply`, `schema:update|apply|diff`, `teams:*` are in the toolbelt (`main`). Flag notes: `projects:create:nosql` has **no `-s`** (Mongo uses `--mongoDBSRV`); `environments`/`environments:get` take `--format json`; `environments:delete`/`layout:apply` use `-f`/`--force`; for `layout:*`, `-e` is `--env` (name **or** id) while `environments:update` `-e` is `--environmentId` (id). **Not in the CLI at all:** `signup` (account creation stays in the web UI). If `forest teams` errors with "Command not found", update the CLI (`npm i -g forest-cli`).
+- **CLI surface (audited)**: `login`, `user`, `projects:create:demo|sql|nosql`, `environments`(+`:create|update|get|delete|reset`), `users:invite`, `roles:create`, `layout:pull|apply`, `schema:update|apply|diff`, `teams:*` are in the toolbelt (`main`). Flag notes: `projects:create:nosql` has **no `-s`** (Mongo uses `--mongoDBSRV`); `environments`/`environments:get` take `--format json`; `environments:delete`/`layout:apply` use `-f`/`--force`; for `layout` commands, `-e` is `--env` (name **or** id) while `environments:update` `-e` is `--environmentId` (id). **Not in the CLI at all:** `signup` (account creation stays in the web UI). If `forest teams` errors with "Command not found", update the CLI (`npm i -g forest-cli`).
 - Concepts grounding: see `references/concepts.md` for the minimal vocabulary.
 
 ## Companion plugins (auto-installed, degrade gracefully)

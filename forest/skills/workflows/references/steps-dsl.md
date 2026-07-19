@@ -1,7 +1,7 @@
 # Workflow `steps` DSL — reference
 
 Verified against the app.forestadmin.com workflow editor (create + edit + save HARs on a live
-`create:demo` project). `forest workflow apply` compiles these `steps` into BPMN, uploads it
+`create:demo` project). `forest workflow:apply` compiles these `steps` into BPMN, uploads it
 (presigned S3) to the target environment's bucket, and links it — the editor imports/executes it.
 
 ## Spec
@@ -61,7 +61,7 @@ StepSpec = {
 }
 ```
 
-## Known gaps (the UI has fields the spec can't express yet — PRD-715)
+## Known gaps (the UI has fields the spec can't express yet)
 
 - `condition`: no explicit question/decision-maker text (only `branches`).
 - `action`: no target Smart Action (`actionId`).
@@ -76,4 +76,4 @@ fully-wired workflow. The behaviour is resolved at runtime by the agent via the 
 
 - The editor canonicalizes element names to PascalCase on save; casing is cosmetic.
 - BPMN carries the `app.forestadmin.com` namespace + a `bpmndi:BPMNDiagram` (diagram interchange) so the
-  editor can import it. `workflow apply` handles both — you only write `steps`.
+  editor can import it. `workflow:apply` handles both — you only write `steps`.
