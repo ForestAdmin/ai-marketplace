@@ -153,5 +153,6 @@ Consult it before any non-trivial patch. *(Maintainers regenerate it against the
 
 Server rules worth internalising (all in the catalogue): edit a component's options via **fine paths**
 (the whole-`options` replace is refused 422); changing a component's `collectionId` or a chart's `type`
-needs a `test` op in the same batch; premium gating (`scopes` / `multipleDashboards` / `inbox`) → 403;
+needs a `test` op in the same batch; **missing premium pack** (`scopes` / `multipleDashboards` / `inbox`) →
+**`402` Payment Required** (a `403` means an insufficient *role*, not premium);
 `422 Not-supported patch` = bad path, `422 ValidationError` = Joi (one error at a time → iterate).

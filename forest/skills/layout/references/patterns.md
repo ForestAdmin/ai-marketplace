@@ -37,7 +37,8 @@ object keyed by domain: `{ "layout": [...], "folders": [...] }`.
 
 - `422 Not-supported patch: {op,path}` → outside the whitelist (fix the path).
 - `422 Invalid patch value (...) ValidationError: ...` → Joi, **one error at a time** → iterate.
-- `403` → missing premium pack (`scopes` | `multipleDashboards` | `inbox`) or insufficient role.
+- `402` (Payment Required) → missing premium pack (`scopes` | `multipleDashboards` | `inbox`).
+- `403` (Forbidden) → insufficient role permission (not premium).
 
 ---
 
