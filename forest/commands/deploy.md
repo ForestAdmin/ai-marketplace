@@ -1,5 +1,5 @@
 ---
-description: Deploy an existing Forest Admin dev project to production (Heroku) and optionally invite the team
+description: Deploy an existing Forest Admin dev project to production and optionally invite the team
 argument-hint: [project name (optional, to disambiguate)]
 ---
 
@@ -12,7 +12,7 @@ Follow the **onboard** skill's contracts throughout: *Stay on rails*, the *comma
 ## 1. Focused preflight (remediate, then proceed)
 
 - 🟩 **Scaffold present** — the cwd must be a booted dev scaffold: `package.json` depending on `@forestadmin/agent`, a `.env` with `FOREST_ENV_SECRET`, and a `.forestadmin-schema.json`. If `.forestadmin-schema.json` is missing or stale, **boot the agent once in dev to regenerate it** (see `boot-standalone-agent`) — production serves the *committed* schema, so it must exist and be committed.
-- 🟩 **Heroku ready** — `heroku` CLI installed, `heroku auth:whoami` authenticated, and a **billed team** available (apps must NOT live in the personal space). Remediate if missing.
+- 🟩 **A hosting target** — ask where the agent should run (their PaaS, container platform, or CI) and check that platform's CLI is installed and authenticated. Forest doesn't host the agent; the user's infra does.
 - 🟩 **Forest auth** — `forest user` shows a session (else `forest login`).
 
 ## 2. Resolve the project (don't guess)
@@ -30,8 +30,8 @@ The local `.env` ties the scaffold to its dev env via `FOREST_ENV_SECRET`, but *
 Project and dev env resolved, run the **onboard** skill's **Segment 2 C** — it is the **single source of truth** for the go-to-prod sequence and owns every gate, checkpoint and secret-by-reference rule. Do **not** re-derive the steps here; the sketch below is just the map:
 
 1. **Production env** — reuse the existing `type: production` env if there is one; else `forest environments:create --type production -n Production -p <projectId>`.
-2. **Production DB** (🟦) — via a `.env` the user writes/sources, never pasted; must be remotely reachable (a local dev DB won't work from Heroku). Warn if it's the same DB as dev.
-3. **Deploy** → the **`deploy-heroku`** skill (PORT patch, IPv4 pooler, billed team, committed schema, prod `FOREST_ENV_SECRET` piped by reference), then set `apiEndpoint` → `isActive: true`. 🚧 **GATE 2**: this deploy creates the project's **first role** — inviting only works after it succeeds.
-4. **Surface + invite** — give the back-office link `https://app.forestadmin.com/<project-name>` (⚠️ never the Heroku URL); replay `forest layout:apply forest-layout.json …` on prod if the user curated one; then **offer** (don't force) `forest users:invite` — 🟦 real emails.
+2. **Production DB** (🟦) — via a `.env` the user writes/sources, never pasted; must be remotely reachable (a local dev DB won't work from a remote host). Warn if it's the same DB as dev.
+3. **Deploy** on the user's chosen host (committed schema, `PORT` handling, prod `FOREST_ENV_SECRET` piped by reference), then set `apiEndpoint` → `isActive: true`. 🚧 **GATE 2**: this deploy creates the project's **first role** — inviting only works after it succeeds.
+4. **Surface + invite** — give the back-office link `https://app.forestadmin.com/<project-name>` (⚠️ never the agent's own hosting URL); replay `forest layout:apply forest-layout.json …` on prod if the user curated one; then **offer** (don't force) `forest users:invite` — 🟦 real emails.
 
-🟥 Fail-fast on a build failure, prod never reaching `isActive`, or an unreachable prod DB — stop with the logs (see `deploy-heroku` troubleshooting); never loop silently.
+🟥 Fail-fast on a build failure, prod never reaching `isActive`, or an unreachable prod DB — stop with the host's logs; never loop silently.

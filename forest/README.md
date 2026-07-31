@@ -33,7 +33,7 @@ You don't hunt for commands. You say what you want; Claude picks the tool.
 - **Node + npm** and **git**
 - A **Forest Admin account** — [sign up](https://app.forestadmin.com) (web only; there's no CLI signup)
 - A **database** to connect *or* nothing at all (the zero-DB demo runs on built-in sample data)
-- *For production deploy:* the **Heroku CLI** logged in, and a **billed Heroku team**
+- *For production deploy:* somewhere to **host the agent** (your own PaaS, container platform or CI) and a **remotely-reachable production database**
 
 ## A few words you'll see
 
