@@ -19,10 +19,11 @@ you describe what you want in plain language and the right skill kicks in:
 | **Onboard** | `/forest:start` | Log in → connect DB (or demo) → boot agent → see your data. |
 | **Layout & workspaces** | *just ask* — "build me a review screen", "add a chart" | Collection display, dashboards/charts, folders, and workspaces with master→detail selection. |
 | **Workflows** | *just ask* — "add an approval flow on refunds" | Author approval / escalation processes on a collection. |
-| **Management & deploy** | *just ask*, or `/forest:deploy` | Roles, users, teams, environments, and deploy to production (Heroku). |
+| **Management & deploy** | *just ask*, or `/forest:deploy` | Roles, users, teams, environments, and deploy to production. |
 
 **Prerequisites:** Node + npm, git, a Forest Admin account ([sign up here](https://app.forestadmin.com) —
-web only), and a database *or* nothing (zero-DB demo). For production deploy: the Heroku CLI + a billed team.
+web only), and a database *or* nothing (zero-DB demo). For production deploy: somewhere to host the agent
+(your own PaaS, container platform or CI) and a remotely-reachable production database.
 
 ### forest-code
 
@@ -75,7 +76,7 @@ ai-marketplace/
 ├── forest/                       # ★ main plugin — onboarding, layout, workflows, management
 │   ├── .claude-plugin/plugin.json
 │   ├── commands/                 # /forest:start, /forest:deploy
-│   ├── skills/                   # onboard, layout, workflows, management, boot, deploy-heroku
+│   ├── skills/                   # onboard, layout, workflows, management, boot
 │   └── tooling/                  # maintainer scripts (not loaded as skills)
 ├── forest-code/                  # agent customization code (modern + legacy)
 ├── forest-mcp/                   # data MCP skill

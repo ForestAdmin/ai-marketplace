@@ -19,11 +19,6 @@ Administration of an existing project, in two areas:
 
 Not here: first-time bootstrap (project/DB/agent/first-deploy) → **`onboard`**; UI/workspaces → **`layout`**; agent code → **`forest-code`**.
 
-> **Verification status — live-tested 2026-07-19** on a demo deployed to Heroku prod: ✅ verified end-to-end —
-> `roles:create` (needs a prod env), `roles:export`/`apply` round-trip, `roles:copy` (both envs must be remote),
-> `users:invite` (real email sent), `teams:create`/`copy-layout`/`delete`, `branch` (needs `--projectId` **and**
-> `-o <origin>`), and the deploy that creates the first "Operations" role. Names/flags match `forest <cmd> --help` (CLI 5.19.0).
-
 ## Command contract (every call)
 
 Resolve ids from `forest environments --format json` (never guess) → build with all flags up front →
@@ -97,10 +92,10 @@ a dev env require a current branch — see the `layout` skill.)
 forest push -p <id> [--force]      # push the current branch's layout changes to its environment
 forest deploy -p <id> [-f]         # deploy dev → production
 ```
-For the **full first go-to-prod** (create prod env, prod DB, Heroku push with the production
-`FOREST_ENV_SECRET`, activate) use the **`onboard`** skill's Segment 2 / the **`deploy-heroku`** skill —
-they own the PaaS findings and secret-by-reference handling. This skill's `deploy`/`push` are the
-granular commands for a project already wired for prod.
+For the **full first go-to-prod** (create prod env, prod DB, deploy the agent with the production
+`FOREST_ENV_SECRET`, activate) use the **`onboard`** skill's Segment 2 — it owns the sequence, the gates
+and the secret-by-reference handling. This skill's `deploy`/`push` are the granular commands for a project
+already wired for prod.
 
 ### Environments
 ```bash
@@ -116,4 +111,4 @@ forest environments:delete -e <env id> --force
 
 `environments:get … secretKey` and the production `FOREST_ENV_SECRET`/`DATABASE_URL` are secrets — never
 print them to the model. Pipe by reference (`forest environments:get <id> --format json | jq -r .secretKey | …`),
-as in the `onboard` / `deploy-heroku` skills.
+as in the `onboard` skill.
