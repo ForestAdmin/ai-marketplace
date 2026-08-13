@@ -24,6 +24,7 @@ Two slash commands; **everything else is *ask-driven*** — describe what you wa
 | **Automate a process** (approval, escalation) | *ask:* "add an approval workflow on refund_requests" |
 | **Manage access** (roles, users, teams) | *ask:* "invite alice as an editor" |
 | **Deploy to production** (+ invite the team) | `/forest:deploy`, or *ask:* "put this in production" |
+| **Run it in your own app / infra** (mount on Express, Docker, private database) | *ask:* "mount Forest in my Express app" |
 | **Customize behaviour** (actions, computed fields, hooks) | *ask* — handled by the companion `forest-code` plugin |
 
 You don't hunt for commands. You say what you want; Claude picks the tool.

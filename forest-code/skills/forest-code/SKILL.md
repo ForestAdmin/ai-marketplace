@@ -15,7 +15,9 @@ Write production-ready Forest Admin agent customization code for the **modern** 
 
 Ask all three before generating anything:
 
-1. **Runtime** — Node.js or Ruby?
+1. **Runtime** — Node.js or Ruby? (Read it from the project: `package.json` → Node, `Gemfile` →
+   Ruby. Only for a *new* install is it a choice, and then Node is the default — Ruby is for data
+   models with polymorphic associations, which the Node agent cannot express.)
 2. **Feature** — What to implement? (see Feature index below)
 3. **Context** — Collection name(s), field names and types, business logic or constraints
 
