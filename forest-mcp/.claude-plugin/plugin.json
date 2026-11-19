@@ -1,13 +1,13 @@
 {
   "name": "forest-mcp",
   "version": "1.0.1",
-  "description": "MCP server skill for querying and manipulating Forest Admin data through CRUD operations",
+  "description": "MCP server skill for querying and manipulating Forest data through CRUD operations",
   "author": {
-    "name": "Forest Admin",
-    "url": "https://www.forestadmin.com"
+    "name": "Forest",
+    "url": "https://forest.app"
   },
   "license": "MIT",
-  "homepage": "https://www.forestadmin.com",
+  "homepage": "https://forest.app",
   "repository": "https://github.com/ForestAdmin/ai-marketplace",
-  "privacyPolicyUrl": "https://www.forestadmin.com/legal/privacy-policy"
+  "privacyPolicyUrl": "https://forest.app/legal/privacy-policy"
 }
