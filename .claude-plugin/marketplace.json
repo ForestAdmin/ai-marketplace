@@ -1,9 +1,9 @@
 {
   "name": "forest-admin-ai",
-  "description": "AI skills and tools for Forest Admin",
+  "description": "AI skills and tools for Forest",
   "owner": {
-    "name": "Forest Admin",
-    "url": "https://www.forestadmin.com"
+    "name": "Forest",
+    "url": "https://forest.app"
   },
   "plugins": [
     {
@@ -19,12 +19,12 @@
     {
       "name": "forest-mcp",
       "source": "./forest-mcp",
-      "description": "MCP server skill for querying and manipulating Forest Admin data (list/search/create/update/delete records, explore schemas)."
+      "description": "Skill for querying and manipulating Forest data through the Forest MCP server (list/search/create/update/delete records, explore schemas)."
     },
     {
       "name": "forest-docs",
       "source": "./forest-docs",
-      "description": "Ask anything about Forest Admin — connects to the docs MCP server."
+      "description": "Ask anything about Forest: connects to the docs MCP server."
     }
   ]
 }

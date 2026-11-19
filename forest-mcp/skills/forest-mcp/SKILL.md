@@ -1,12 +1,12 @@
 ---
 name: forest-mcp
 description: |
-  Query and manipulate Forest Admin data through MCP tools. Use when the user wants to search, filter, explore, create, update, delete data from their Forest Admin database. Triggers on questions like "find all users", "create a new order", "update user 42", "delete inactive products", "show me customers from Paris", or any data operation request involving Forest Admin collections.
+  Query and manipulate Forest data through MCP tools. Use when the user wants to search, filter, explore, create, update, delete data from their Forest database. Triggers on questions like "find all users", "create a new order", "update user 42", "delete inactive products", "show me customers from Paris", or any data operation request involving Forest collections.
 ---
 
-# Forest Admin MCP Server
+# Forest MCP Server
 
-MCP server providing CRUD operations on Forest Admin data.
+MCP server providing CRUD operations on Forest data.
 
 ## Quick Start
 
@@ -166,6 +166,7 @@ When operators are returned, use only those listed for each field.
 ## Best Practices
 
 1. **Describe first**: Always call `describeCollection` to discover available fields
+1. **Confirm before writing**: Before calling `create`, `update` or `delete`, tell the user which records will change and how, and wait for their confirmation
 2. **Use field projection**: Specify `fields` to reduce data transfer
 3. **Paginate large results**: Use `pagination` for large datasets
 4. **Handle unknown operators**: When `operators: null`, try common operators - errors are informative
