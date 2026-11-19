@@ -1,6 +1,6 @@
 {
   "name": "forest",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Build a Forest Admin back-office headlessly from Claude, no UI — start with /forest:start. Onboarding (log in, connect a real-DB or zero-DB demo project, boot the dev agent), layout & workspaces, workflows, and project management (roles, users, teams, environments, deploy). Most capabilities are ask-driven skills, not slash commands. Orchestrates the toolbelt CLI end-to-end. See README.md.",
   "author": {
     "name": "Forest Admin",

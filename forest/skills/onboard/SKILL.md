@@ -6,8 +6,8 @@ description: >
   "connect my database to Forest Admin", "build an internal back-office without
   the wizard", "just see Forest Admin running" (zero-DB demo), or go from login
   to a deployed production back-office with an invited team. It orchestrates the
-  CLI (toolbelt) and the sibling skills (boot-standalone-agent, deploy-heroku)
-  and hands off customizations to the forest-code skill.
+  CLI (toolbelt) and the sibling skill boot-standalone-agent, and hands off
+  customizations to the forest-code skill.
 ---
 
 # Forest Admin — headless onboarding (orchestrator)
@@ -57,7 +57,7 @@ The goal is **zero self-inflicted misfires** (a prompt you triggered, a guessed 
 3. **BUILD with every flag up front** — from the command card below, so the CLI never needs to prompt.
 4. **EXECUTE wrapped** — `bash -c '… </dev/null 2>&1'`. Two proven reasons: (1) a broken zsh `command_not_found_handler` (e.g. `mise`) can **swallow `forest`'s stdout** — `bash` bypasses it; (2) `</dev/null` stops the CLI **hanging on an interactive prompt** (it fails fast instead). Don't rely on `timeout` — often absent on macOS.
 5. **NEVER hand-answer a prompt.** A prompt means a flag is missing — add it and re-run. It is a bug in the card, never something to type through.
-6. **CLI-only surface — never the private HTTP API.** This skill drives supported `forest`/`heroku` commands and nothing else. When there's **no CLI command** for what's asked (e.g. deleting a project — `projects` only has `create`/`get`), **point the user to the UI**; do **not** improvise a `curl` against the private API.
+6. **CLI-only surface — never the private HTTP API.** This skill drives supported `forest` commands (plus the user's own hosting CLI at deploy time) and nothing else. When there's **no CLI command** for what's asked (e.g. deleting a project — `projects` only has `create`/`get`), **point the user to the UI**; do **not** improvise a `curl` against the private API.
 
 **Prompt-triggers → the flag that silences them** (the cards already include these):
 
@@ -84,9 +84,9 @@ The most dangerous secret here is the **database connection URI** — it carries
   ```
   Then source it and pass it by reference: `set -a; . ./.env; set +a` → `forest projects:create:sql -c "$DATABASE_URL" …`. The shell expands `$DATABASE_URL`; Claude only ever emits the **variable name**.
 - **Never** ask the user to paste the URI into the chat, **never** `cat`/print a `.env`, **never** put a secret in a command literal or in the final recap.
-- **Reading a secret back** (e.g. the prod `secretKey`): pipe it, don't print it — `forest environments:get <id> --format json | jq -r .secretKey | …` straight into `heroku config:set`, so the value never lands in the model's context.
+- **Reading a secret back** (e.g. the prod `secretKey`): pipe it, don't print it — `forest environments:get <id> --format json | jq -r .secretKey | …` straight into the host's env-var setter, so the value never lands in the model's context. ⚠️ Many hosting CLIs **echo back** the value they just set → silence secret-bearing calls with `>/dev/null 2>&1`.
 - Fallback channel: the CLI's own **interactive prompt** (user types into their TTY) — even safer than env vars (no argv/`ps` exposure either).
-- A hand-rolled root `.env` **must be gitignored** (else it ships via `git push heroku`).
+- A hand-rolled root `.env` **must be gitignored** (else it ships with the deploy).
 
 ## Two flows (choose at the start)
 
@@ -96,8 +96,6 @@ Frame the onboarding around **who the user is and whether they have a database**
 - **Ops flow — "I have no database, I want to explore."** Someone evaluating Forest, no DB / no Docker → `forest projects:create:demo` scaffolds an agent on a **self-contained fintech demo datasource** + ships a curated layout file. Boot → apply layout → explore locally. Data is ephemeral; no production, no invites.
 
 **Routing rule: no reachable database ⇒ ops/demo flow** (never block on "no DB"). If the user has a DB and wants their real data, it's the dev flow. Ask which fits; if they're unsure or DB-less, start the ops flow.
-
-> These mirror the two Linear projects: *Headless onboarding · CLI & orchestration* (dev) and *Headless onboarding for ops* (ops).
 
 ### Ops flow — defaults (do NOT ask, just proceed)
 
@@ -148,7 +146,7 @@ Two segments with a hard boundary. **Segment 1 runs to completion by default. Se
 
 4. **🎉 Milestone — "your back-office is live"** (this is the finish line of the core):
    - **Prove it, don't just assert it.** Confirm the schema was pushed (the boot log line, or `forest environments:get <dev env id> --format json` → `isActive`) **and** that collections actually surface — the proof a dev cares about is *seeing their tables*, not an `isActive` flag.
-   - **Surface the link** — the back-office is `https://app.forestadmin.com/<project-name>`. ⚠️ The localhost/Heroku URL is the **agent backend**, never the back-office — don't present it as the thing to open.
+   - **Surface the link** — the back-office is `https://app.forestadmin.com/<project-name>`. ⚠️ The localhost/hosting URL is the **agent backend**, never the back-office — don't present it as the thing to open.
    - **Be honest about what this is:** it runs **on the user's machine, for them only**, and stops when they stop the process. That honesty is what makes the deploy option meaningful — don't oversell local as production.
    - **STOP here.** Present a short, finite menu and **run nothing** until the user picks:
      ```
@@ -173,12 +171,16 @@ Two segments with a hard boundary. **Segment 1 runs to completion by default. Se
   - **As code (if they ask me to)** — a conservative denoise pass via `layout:pull`/`layout:apply`, producing a versioned `forest-layout.json`. Because there's no visual feedback loop here, keep it **rules-based and conservative**: hide **foreign keys** (`*_id`), **audit timestamps** (`created_at`/`updated_at`/`deleted_at`) and **secrets** (`password`/`hash`/`token`/`secret`/`encrypted`); **keep visible** business identifiers (`public_id`, `external_id`, `slug`, `reference`, `*_number`). **Don't** reorder columns or pick a record title blind — that needs the UI. Steps: `forest layout:pull -e <env name|id> -t Operations` → edit `forest-layout.json` → `forest layout:apply forest-layout.json -e <env name|id> -t Operations -f`.
   - 🚧 Layout requires **boot first (GATE 1)** — `layout:apply` is rejected until the agent has pushed its schema.
 
-- **B. Customizations** → hand off to the **`forest-code`** skill (actions, fields, hooks, segments). After any customization, **regenerate `.forestadmin-schema.json` + commit + redeploy** (production reads the frozen schema) — see `deploy-heroku`.
+- **B. Customizations** → hand off to the **`forest-code`** skill (actions, fields, hooks, segments). After any customization, **regenerate `.forestadmin-schema.json` + commit + redeploy** (production reads the frozen schema).
 
 - **C. Go-to-prod (deploy → invite).** Only if the user chose to make it real for their team. *(A returning user who already has a booted dev project — i.e. is past Segment 1 in a fresh session — should enter here directly via the **`/forest:deploy`** command, which resolves the existing project/prod-env instead of re-creating anything. Never re-run Segment 1 for them.)*
   1. **Production environment** — `forest environments:create --type production -n Production` (URL may be omitted; created **inactive**, **no role yet**).
   2. **Collect the production database here** (not earlier): it **may differ from dev** and **must be remotely reachable** (a local dev DB will NOT work from a PaaS). Ask same-as-dev (only valid if dev is already remote) vs a dedicated prod DB; capture that prod `DATABASE_URL` **separately**. 🟦 If same DB, warn that admin actions hit real production data.
-  3. **Deploy** → use the **`deploy-heroku`** skill: push the agent code with the **production** `FOREST_ENV_SECRET`. The agent pushes its schema to prod → `apimapVersionId` **+ the first role ("Operations") is created here**. Set `apiEndpoint` (`forest environments:update -e <id> -u <url>`) → `isActive: true`.
+  3. **Deploy the agent** — the user's hosting is the user's call (their PaaS, their container platform, their CI). Ask where it should run and follow **their** platform's deploy path; this skill owns the **Forest side**, not the host:
+     - **Config** — `NODE_ENV=production`, the prod `DATABASE_*` vars, a generated `FOREST_AUTH_SECRET` (`openssl rand -hex 32`), and the **production** `FOREST_ENV_SECRET` piped by reference (see *Secrets*, and silence secret-bearing `config set` calls).
+     - **Port** — the scaffold listens on `APPLICATION_PORT`; most hosts inject `PORT`. If so, patch the entrypoint to `Number(process.env.PORT || process.env.APPLICATION_PORT)` or the boot will time out.
+     - **Schema** — with `NODE_ENV=production` the agent serves the **committed** `.forestadmin-schema.json` (no introspection). It must be generated (dev boot) and committed, and re-committed after any customization.
+     - Once it boots, the agent pushes its schema to prod → `apimapVersionId` **+ the first role ("Operations") is created here**. Then set `apiEndpoint` (`forest environments:update -e <id> -u <public url>`) → `isActive: true`.
      - 🚧 **GATE 2**: the **first role is created by this deployment** — so **inviting before deploying fails** ("No role found"). There is **no pre-deploy shortcut**: `forest roles:create` also refuses without a production env (verified live). Deploy first, then invite.
   4. **Re-apply the layout to prod** *(if the user did the code layout in A)* — replay the same versioned file: `forest layout:apply forest-layout.json -e <prod env id> -t Operations -f`. Since the artefact already exists, prod layout is nearly free.
   5. **Surface the prod back-office link** `https://app.forestadmin.com/<project-name>` before inviting.
@@ -198,7 +200,7 @@ Linear and short; no segments, no stop-and-ask beyond the plan recap.
 
 ## Output (end of run)
 
-The **back-office** is always `https://app.forestadmin.com/<project-name>` — that is the link to give the user. The localhost/Heroku URL is the **agent backend**, never the back-office.
+The **back-office** is always `https://app.forestadmin.com/<project-name>` — that is the link to give the user. The localhost/hosting URL is the **agent backend**, never the back-office.
 
 - **Ops flow** — keep it plain and end on the link: *"Your demo back-office is live — open `https://app.forestadmin.com/<project-name>` to explore."* No env-vars block, no technical ids, no jargon.
 - **Dev flow (core)** — end on the milestone menu (above). Don't dump a technical summary unless asked.
@@ -219,4 +221,4 @@ This plugin **declares `forest-code` and `forest-docs` as dependencies** (see `p
 | **Write customizations** (actions, fields, hooks, segments…) | **`forest-code`** plugin | Recommend installing `forest-code`; do not hand-roll customization code. |
 | **Product questions** ("what is X", how a feature works) | **`forest-docs`** plugin (MCP → live docs) | Answer from `references/concepts.md`; point to https://docs.forestadmin.com. |
 
-After any `forest-code` customization, run the **redeploy loop** (regenerate `.forestadmin-schema.json` → commit → redeploy) — see the `deploy-heroku` skill. `forest-code` writes the code; **it does not redeploy** — that is this plugin's job.
+After any `forest-code` customization, run the **redeploy loop** (regenerate `.forestadmin-schema.json` → commit → redeploy on the user's host). `forest-code` writes the code; **it does not redeploy** — that is this plugin's job.

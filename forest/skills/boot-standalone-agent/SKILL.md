@@ -51,7 +51,7 @@ kill -0 "$AGENT_PID" 2>/dev/null || echo "agent exited — read $LOG for the err
 
 > ⚠️ **Demo landmine** — `create:demo`'s bundled install can print "Hooray installation success!" yet leave `node_modules/@forestadmin` **empty**, so `npm start` fails to resolve `@forestadmin/*`. Before booting, **verify** `node_modules/@forestadmin` is populated; if not, **re-run `npm install`** and re-check.
 
-> ⚠️ **TypeScript build landmine (stale `tsc` can't parse modern `.d.ts`/`.d.cts`)** — the scaffold pins TypeScript `^4.9`, but transitive deps ship declaration files in newer TS syntax: `@types/node` (v26+, pulled unpinned) **and `zod` v4** (`node_modules/zod/v4/core/schemas.d.cts`). `tsc@4.9` fails to **parse** them and `skipLibCheck` does **not** skip *parse* errors → `npm run build` dies with `TS1005`/`TS1128` in `node_modules/*`. **Verified fix (one shot): bump TypeScript — `npm install --save-dev typescript@^5.5`**, then rebuild. This parses both offenders and **supersedes** the narrower `@types/node@^20` down-pin. Do it right after `npm install` (it also unblocks the later Heroku build). *(Root cause is the scaffold's TS pin.)*
+> ⚠️ **TypeScript build landmine (stale `tsc` can't parse modern `.d.ts`/`.d.cts`)** — the scaffold pins TypeScript `^4.9`, but transitive deps ship declaration files in newer TS syntax: `@types/node` (v26+, pulled unpinned) **and `zod` v4** (`node_modules/zod/v4/core/schemas.d.cts`). `tsc@4.9` fails to **parse** them and `skipLibCheck` does **not** skip *parse* errors → `npm run build` dies with `TS1005`/`TS1128` in `node_modules/*`. **Verified fix (one shot): bump TypeScript — `npm install --save-dev typescript@^5.5`**, then rebuild. This parses both offenders and **supersedes** the narrower `@types/node@^20` down-pin. Do it right after `npm install` (it also unblocks the later production build). *(Root cause is the scaffold's TS pin.)*
 
 > ⚠️ **Two-port landmine** — the demo agent binds **two** listeners (the agent on `APPLICATION_PORT`, plus a secondary agent-client/AI-proxy port). If another agent is already running, the boot fails with `EADDRINUSE` — sometimes on the **secondary** port, *after* it has already logged `Successfully mounted` and pushed the schema. To boot cleanly alongside another agent, override the port: **`APPLICATION_PORT=<free port> npm start`**. And note: the schema push can complete even when the second bind crashes, so the **dev env may already be active despite the crash** — check the log/`environments:get` before assuming failure.
 
@@ -69,5 +69,5 @@ info: Successfully mounted on Standalone server (http://0.0.0.0:<port>)
 
 ## Notes
 
-- Dev environments have **roles disabled** (`areRolesDisabled`), so **no role is created** at this stage — that happens on production deployment (see `deploy-heroku` / `onboard` GATE 2).
+- Dev environments have **roles disabled** (`areRolesDisabled`), so **no role is created** at this stage — that happens on production deployment (see `onboard` GATE 2).
 - Fail-fast if the agent exits before mounting (print the error: DB connection, missing deps, port already in use).
