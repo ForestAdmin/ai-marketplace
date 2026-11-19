@@ -1,9 +1,13 @@
 {
   "name": "forest-docs",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Ask anything about Forest Admin — connects Claude to the Forest Admin documentation MCP server (search + read the docs on demand)",
   "author": {
     "name": "Forest Admin",
     "url": "https://www.forestadmin.com"
-  }
+  },
+  "license": "MIT",
+  "homepage": "https://www.forestadmin.com",
+  "repository": "https://github.com/ForestAdmin/ai-marketplace",
+  "privacyPolicyUrl": "https://www.forestadmin.com/legal/privacy-policy"
 }

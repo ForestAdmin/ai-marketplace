@@ -166,6 +166,7 @@ When operators are returned, use only those listed for each field.
 ## Best Practices
 
 1. **Describe first**: Always call `describeCollection` to discover available fields
+1. **Confirm before writing**: Before calling `create`, `update` or `delete`, tell the user which records will change and how, and wait for their confirmation
 2. **Use field projection**: Specify `fields` to reduce data transfer
 3. **Paginate large results**: Use `pagination` for large datasets
 4. **Handle unknown operators**: When `operators: null`, try common operators - errors are informative
