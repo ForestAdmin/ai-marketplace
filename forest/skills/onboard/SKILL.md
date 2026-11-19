@@ -110,6 +110,28 @@ The ops persona **explores**; they are not a developer. Minimise questions and j
 - **Plan recap in plain language** — no "GATE 1 / apimap / schema". Say what the user gets, e.g.:
   > 1. Build your demo back-office (sample fintech data, no setup). 2. Start it. 3. Apply a clean, ready-made layout. 4. Give you the link to open and explore.
 
+## Which agent technology (settle this before creating anything)
+
+Forest has several agent SDKs. **Node.js is the default — recommend it unless something forces
+otherwise**: it is the reference implementation and new features land there first. This whole
+orchestrator assumes it.
+
+**The one deciding factor is polymorphic associations.** A Rails-style pair
+(`commentable_id` + `commentable_type`, one association pointing at several models) **cannot be
+modelled by the Node agent** — its datasource layer has no polymorphic relation type. The Forest
+schema format supports polymorphism, which is why the **Rails** agent (`forest_admin_agent` gem)
+can expose it. So: their data model relies on polymorphic associations → **Rails**.
+
+🚧 **Consequence for this flow — the toolbelt scaffolds `javascript`/`typescript` only.** There is
+no Ruby scaffold and no `projects:create:*` path for Rails. If Rails wins, **say so and stop
+scaffolding**: they add the gem to their existing Rails application instead, and this orchestrator
+covers only the account/environment part of their setup. Do not quietly create a Node project
+because that is the flow you know.
+
+Other reasons a client may name (the team only writes Ruby, the agent must live inside the Rails
+monolith) are legitimate, but weigh them out loud against features landing on Node first. Ask now
+— it costs a question today and a rewrite later.
+
 ## Collect intent (arguments, not a wizard)
 
 - flow (dev / ops) · use-case / app name · language *(dev flow only — ops is always TypeScript)*.
@@ -208,6 +230,7 @@ The **back-office** is always `https://app.forestadmin.com/<project-name>` — t
 
 - **Readiness**: local = the agent log line `Successfully mounted on Standalone server`; remote = poll `forest environments:get … --format json` (`isActive = apimapVersionId && apiEndpoint`).
 - **CLI surface (audited)**: `login`, `user`, `projects:create:demo|sql|nosql`, `environments`(+`:create|update|get|delete|reset`), `users:invite`, `roles:create`, `layout:pull|apply`, `schema:update|apply|diff`, `teams:*` are in the toolbelt (`main`). Flag notes: `projects:create:nosql` has **no `-s`** (Mongo uses `--mongoDBSRV`); `environments`/`environments:get` take `--format json`; `environments:delete`/`layout:apply` use `-f`/`--force`; for `layout` commands, `-e` is `--env` (name **or** id) while `environments:update` `-e` is `--environmentId` (id). **Not in the CLI at all:** `signup` (account creation stays in the web UI). If `forest teams` errors with "Command not found", update the CLI (`npm i -g forest-cli`).
+- **Agent in the user's own codebase or infra** — mounted on an existing Express/Koa/Fastify/NestJS app, deployed to their own platform (Docker/K8s), a database behind a bastion, or several instances → the **`self-host`** skill. This orchestrator covers the *scaffolded* path only.
 - Concepts grounding: see `references/concepts.md` for the minimal vocabulary.
 
 ## Companion plugins (auto-installed, degrade gracefully)
